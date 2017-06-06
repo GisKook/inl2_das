@@ -1,0 +1,28 @@
+syntax="proto3";
+package RealTimeVector;
+
+option java_package = "com.cetcnav.inl2.platform.pb.model";
+option java_outer_classname="RealTimeVectorReportProtos";
+
+// 信标
+message Beacon{
+    uint64 id = 1;  // 标签mac地址
+    float rssi = 2; // 信号强度
+}
+
+// 一个手环信标信息
+message SingleRingRealTimeVector{
+	uint64  ring_mac = 1; // 手环MAC
+	int32  battery  = 2; // 电池电量0-100表示百分比
+	double acc_x    = 3; // 三轴加速度X
+	double acc_y    = 4; // 三轴加速度Y
+	double acc_z    = 5; // 三轴加速度Z
+	int32  alarm    = 6; // 报警类型
+	repeated Beacon beacons  = 7; // 信标
+}
+
+// 所有信标
+message RealTimeVectors{
+	int64   time_recv                                 = 1;   // das收到时间
+	repeated SingleRingRealTimeVector single_ring_rtv = 2;	 // 收到的所有实时向量
+}

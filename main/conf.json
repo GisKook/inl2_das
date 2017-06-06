@@ -1,0 +1,17 @@
+{
+    "Server": {
+        "BindPort": "8766",
+        "ReadLimit": 30000,
+        "WriteLimit": 30000,
+        "ConnTimeout": 300,
+        "ConnCheckInterval": 30,
+        "ServerStatistics": 300
+    },
+    "Nsq":{
+	    "Addr":"127.0.0.1:4150",
+	    "ReportInterval":3,
+	    "MaxReportCount":15,
+            "Count":2,
+	    "TopicRssis":"calc_point"
+    }
+}
