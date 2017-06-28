@@ -1,6 +1,6 @@
 {
     "Server": {
-        "BindPort": "8766",
+        "BindPort": "7769",
         "ReadLimit": 30000,
         "WriteLimit": 30000,
         "ConnTimeout": 300,

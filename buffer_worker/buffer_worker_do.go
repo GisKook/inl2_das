@@ -51,8 +51,10 @@ func (z *BufferWorker) GetAvgRssi(in []*base.Beacon) []*base.Beacon {
 	mac_rssis := make([]*base.Beacon, length)
 
 	for k, value := range tag_mac_rssi {
-		mac_rssis[k].Id = value.TagMac
-		mac_rssis[k].Rssi = value.Rssi / float32(value.Count)
+		mac_rssis[k] = &base.Beacon{
+			Id:   value.TagMac,
+			Rssi: value.Rssi / float32(value.Count),
+		}
 	}
 
 	return mac_rssis
@@ -65,37 +67,39 @@ func (z *BufferWorker) PreProccessMsg() {
 }
 
 func (z *BufferWorker) ProccessSendMsg() {
-	z.PreProccessMsg()
-	time_recv := time.Now().Unix() * 1000
-	rtvs := &RealTimeVector.RealTimeVectors{
-		TimeRecv:      time_recv,
-		SingleRingRtv: make([]*RealTimeVector.SingleRingRealTimeVector, 0),
-	}
-	for i, m := range z.LocateQueue {
-		tag_mac_rssi_count := len(m.Beacons)
-		if tag_mac_rssi_count > int(conf.GetConf().Nsq.MaxReportCount) {
-			tag_mac_rssi_count = int(conf.GetConf().Nsq.MaxReportCount)
+	if len(z.LocateQueue) > 0 {
+		z.PreProccessMsg()
+		time_recv := time.Now().Unix() * 1000
+		rtvs := &RealTimeVector.RealTimeVectors{
+			TimeRecv:      time_recv,
+			SingleRingRtv: make([]*RealTimeVector.SingleRingRealTimeVector, 0),
 		}
-		indoor := &RealTimeVector.SingleRingRealTimeVector{
-			RingMac: m.RingMac,
-			AccX:    m.AccX,
-			AccY:    m.AccY,
-			AccZ:    m.AccZ,
-			Battery: m.Battery,
-			Alarm:   m.Alarm,
-			Beacons: make([]*RealTimeVector.Beacon, tag_mac_rssi_count),
-		}
-
-		for j := 0; j < tag_mac_rssi_count; j++ {
-			indoor.Beacons[j] = &RealTimeVector.Beacon{
-				Id:   m.Beacons[j].Id,
-				Rssi: m.Beacons[j].Rssi,
+		for i, m := range z.LocateQueue {
+			tag_mac_rssi_count := len(m.Beacons)
+			if tag_mac_rssi_count > int(conf.GetConf().Nsq.MaxReportCount) {
+				tag_mac_rssi_count = int(conf.GetConf().Nsq.MaxReportCount)
 			}
-		}
-		rtvs.SingleRingRtv = append(rtvs.SingleRingRtv, indoor)
-		delete(z.LocateQueue, i)
-	}
-	data, _ := proto.Marshal(rtvs)
+			indoor := &RealTimeVector.SingleRingRealTimeVector{
+				RingMac: m.RingMac,
+				AccX:    m.AccX,
+				AccY:    m.AccY,
+				AccZ:    m.AccZ,
+				Battery: m.Battery,
+				Alarm:   m.Alarm,
+				Beacons: make([]*RealTimeVector.Beacon, tag_mac_rssi_count),
+			}
 
-	mq.GetSender().Send(conf.GetConf().Nsq.TopicRssis, data)
+			for j := 0; j < tag_mac_rssi_count; j++ {
+				indoor.Beacons[j] = &RealTimeVector.Beacon{
+					Id:   m.Beacons[j].Id,
+					Rssi: m.Beacons[j].Rssi,
+				}
+			}
+			rtvs.SingleRingRtv = append(rtvs.SingleRingRtv, indoor)
+			delete(z.LocateQueue, i)
+		}
+		data, _ := proto.Marshal(rtvs)
+
+		mq.GetSender().Send(conf.GetConf().Nsq.TopicRssis, data)
+	}
 }
